@@ -1,0 +1,9 @@
+{
+  "name": "mile-markers-reminders",
+  "private": true,
+  "type": "module",
+  "description": "Sends Mile Markers phone reminders.",
+  "dependencies": {
+    "firebase-admin": "14.5.0"
+  }
+}
