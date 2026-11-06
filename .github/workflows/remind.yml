@@ -1,0 +1,36 @@
+name: Reminders
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  actions: write
+concurrency:
+  group: reminders
+  cancel-in-progress: false
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TZ: America/New_York
+      SITE_URL: https://road-to-jan-yaya.netlify.app/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: node remind.mjs
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      # GitHub pauses scheduled jobs in public repos after 60 quiet days. Re-enabling once a week keeps reminders running.
+      - name: Keep the schedule on
+        if: github.event_name == 'schedule'
+        run: |
+          if [ "$(date +%u%H)" = "709" ] && [ "$(date +%M)" -lt 15 ]; then
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/remind.yml/enable" && echo "schedule kept on"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
